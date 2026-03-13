@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pascal Beniamin — IT Blog</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet"/>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --green:      #00ff41;
+      --green-dim:  #00c832;
+      --green-dark: #004d14;
+      --cyan:       #00e5ff;
+      --red:        #ff003c;
+      --purple:     #b700ff;
+      --yellow:     #ffe600;
+      --bg:         #050a05;
+      --bg2:        #080f08;
+      --bg3:        #0d1a0d;
+      --border:     rgba(0,255,65,0.18);
+      --border-hot: rgba(0,255,65,0.55);
+      --text:       #c8ffc8;
+      --text-dim:   #4a7a4a;
+      --card:       rgba(0,255,65,0.04);
+      --card-hover: rgba(0,255,65,0.09);
+      --glow:       0 0 18px rgba(0,255,65,0.35), 0 0 40px rgba(0,255,65,0.12);
+      --glow-cyan:  0 0 18px rgba(0,229,255,0.45);
+      --glow-red:   0 0 18px rgba(255,0,60,0.55);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* ── SCANLINES ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+      );
+    }
+
+    /* ── MATRIX CANVAS ── */
+    #matrix-canvas {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0; opacity: 0.07; pointer-events: none;
+    }
+
+    /* ── CURSOR ── */
+    .custom-cursor {
+      position: fixed; width: 18px; height: 18px;
+      border: 2px solid var(--green); border-radius: 50%;
+      pointer-events: none; z-index: 10000;
+      transition: transform 0.1s ease;
+      transform: translate(-50%, -50%);
+    }
+    .custom-cursor::after {
+      content: ''; position: absolute;
+      width: 4px; height: 4px;
+      background: var(--green); border-radius: 50%;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+    }
+
+    /* ── LAYOUT ── */
+    .wrapper { position: relative; z-index: 1; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+      background: rgba(5,10,5,0.92);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .nav-logo {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.1rem; font-weight: 900;
+      color: var(--green);
+      text-shadow: var(--glow);
+      letter-spacing: 2px;
+    }
+    .nav-logo span { color: var(--cyan); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.78rem; letter-spacing: 1px;
+      color: var(--text-dim); text-decoration: none;
+      text-transform: uppercase; transition: color 0.2s;
+      position: relative;
+    }
+    .nav-links a::before {
+      content: '> '; color: var(--green); opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .nav-links a:hover { color: var(--green); }
+    .nav-links a:hover::before { opacity: 1; }
+    .nav-status {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; color: var(--green-dim);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .status-dot {
+      width: 7px; height: 7px; background: var(--green);
+      border-radius: 50%; animation: blink 1.2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.1} }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 80px 2rem 2rem;
+      position: relative;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      max-width: 1100px; width: 100%;
+      align-items: center;
+    }
+    .hero-left { display: flex; flex-direction: column; gap: 1.4rem; }
+    .hero-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem; color: var(--green);
+      letter-spacing: 3px; text-transform: uppercase;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hero-tag::before { content: '['; color: var(--text-dim); }
+    .hero-tag::after  { content: ']'; color: var(--text-dim); }
+    h1.hero-name {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.05;
+      text-shadow: 0 0 30px rgba(0,255,65,0.3);
+    }
+    h1.hero-name .accent { color: var(--green); }
+    .hero-role {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1rem; color: var(--cyan);
+      letter-spacing: 2px;
+    }
+    .hero-bio {
+      font-size: 1rem; color: var(--text-dim);
+      line-height: 1.7; max-width: 460px;
+    }
+    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .btn-primary {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.8rem; letter-spacing: 2px;
+      padding: 12px 28px;
+      background: transparent;
+      border: 1px solid var(--green);
+      color: var(--green);
+      cursor: pointer; text-decoration: none;
+      text-transform: uppercase;
+      position: relative; overflow: hidden;
+      transition: color 0.3s, box-shadow 0.3s;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    }
+    .btn-primary::before {
+      content: ''; position: absolute; inset: 0;
+      background: var(--green); transform: scaleX(0);
+      transform-origin: left; transition: transform 0.3s;
+      z-index: -1;
+    }
+    .btn-primary:hover { color: var(--bg); box-shadow: var(--glow); }
+    .btn-primary:hover::before { transform: scaleX(1); }
+    .btn-secondary {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.8rem; letter-spacing: 2px;
+      padding: 12px 28px;
+      background: transparent;
+      border: 1px solid var(--text-dim);
+      color: var(--text-dim);
+      cursor: pointer; text-decoration: none;
+      text-transform: uppercase;
+      transition: border-color 0.3s, color 0.3s;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    }
+    .btn-secondary:hover { border-color: var(--cyan); color: var(--cyan); }
+
+    /* Hero Right — Terminal */
+    .hero-terminal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: var(--glow), inset 0 0 60px rgba(0,255,65,0.03);
+    }
+    .terminal-bar {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 14px;
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; color: var(--text-dim);
+    }
+    .t-dot { width:10px;height:10px;border-radius:50%; }
+    .t-dot.red   { background:#ff5f57; }
+    .t-dot.yellow{ background:#febc2e; }
+    .t-dot.green { background:#28c840; }
+    .terminal-body {
+      padding: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.8;
+      min-height: 340px;
+    }
+    .t-line { display: flex; gap: 8px; }
+    .t-prompt { color: var(--green); white-space: nowrap; }
+    .t-cmd    { color: #fff; }
+    .t-out    { color: var(--text-dim); padding-left: 16px; }
+    .t-key    { color: var(--cyan); }
+    .t-val    { color: var(--yellow); }
+    .t-comment{ color: var(--text-dim); font-style: italic; }
+    .t-cursor {
+      display: inline-block; width:9px; height:1.1em;
+      background: var(--green); vertical-align: text-bottom;
+      animation: blink 1s infinite;
+    }
+
+    /* ── SECTION COMMON ── */
+    section {
+      padding: 100px 2rem;
+      max-width: 1200px; margin: 0 auto;
+    }
+    .section-header {
+      margin-bottom: 4rem;
+      display: flex; align-items: center; gap: 1.5rem;
+    }
+    .section-num {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; color: var(--green);
+      letter-spacing: 2px;
+    }
+    h2.section-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 700; color: #fff;
+      text-transform: uppercase; letter-spacing: 3px;
+    }
+    h2.section-title .hl { color: var(--green); }
+    .section-line {
+      flex: 1; height: 1px;
+      background: linear-gradient(90deg, var(--green-dim), transparent);
+    }
+
+    /* ── SKILLS ── */
+    #skills { background: none; }
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .skill-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 1.2rem 1rem;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      cursor: default; transition: background 0.3s, border-color 0.3s, transform 0.3s;
+      position: relative; overflow: hidden;
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+    }
+    .skill-card::before {
+      content: ''; position: absolute; top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0,255,65,0.07), transparent);
+      transition: left 0.5s;
+    }
+    .skill-card:hover { background: var(--card-hover); border-color: var(--border-hot); transform: translateY(-4px); }
+    .skill-card:hover::before { left: 150%; }
+    .skill-icon {
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+    }
+    .skill-icon img { width: 38px; height: 38px; object-fit: contain; filter: brightness(1.2) drop-shadow(0 0 6px rgba(0,255,65,0.4)); }
+    .skill-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem; letter-spacing: 1px;
+      color: var(--green); text-align: center;
+    }
+    .skill-bar-wrap { width: 100%; height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; }
+    .skill-bar {
+      height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan));
+      border-radius: 2px;
+      width: 0;
+      transition: width 1.5s cubic-bezier(0.16,1,0.3,1);
+    }
+    .skill-percent {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; color: var(--text-dim);
+      align-self: flex-end;
+    }
+
+    /* category filter */
+    .skill-filters {
+      display: flex; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 2rem;
+    }
+    .filter-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; letter-spacing: 1px;
+      padding: 6px 16px;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-dim); cursor: pointer; text-transform: uppercase;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--green); color: var(--green);
+      background: rgba(0,255,65,0.05);
+    }
+
+    /* ── LANGUAGES (programming) ── */
+    #languages { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .lang-radar-wrap {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+    }
+    .lang-list { display: flex; flex-direction: column; gap: 1.2rem; }
+    .lang-item { display: flex; flex-direction: column; gap: 6px; }
+    .lang-header {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .lang-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.82rem; color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .lang-name i { color: var(--green); font-size: 1rem; }
+    .lang-lvl {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; color: var(--text-dim);
+    }
+    .lang-track {
+      height: 6px; background: rgba(255,255,255,0.05);
+      border-radius: 3px; overflow: hidden;
+      position: relative;
+    }
+    .lang-fill {
+      height: 100%; border-radius: 3px; width: 0;
+      transition: width 1.6s cubic-bezier(0.16,1,0.3,1);
+      position: relative;
+    }
+    .lang-fill::after {
+      content: ''; position: absolute; right: 0; top: 0;
+      width: 8px; height: 100%;
+      background: #fff; border-radius: 50%;
+      filter: blur(2px); opacity: 0.8;
+    }
+
+    /* ── RADAR CHART ── */
+    #radar { display: block; margin: 0 auto; }
+
+    /* ── TOOLS / STACK ── */
+    #stack {}
+    .stack-diagram {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .stack-layer {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      position: relative;
+      transition: border-color 0.3s;
+    }
+    .stack-layer:hover { border-color: var(--border-hot); }
+    .stack-layer-label {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem; letter-spacing: 2px;
+      color: var(--green); margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+    .stack-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .stack-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; padding: 4px 10px;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      transition: all 0.2s;
+    }
+    .stack-tag:hover { border-color: var(--cyan); color: var(--cyan); }
+
+    /* ── SOCIAL ── */
+    #social { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .social-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+    .social-card {
+      background: var(--card); border: 1px solid var(--border);
+      padding: 1.5rem 1rem;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      text-decoration: none; cursor: pointer;
+      transition: all 0.3s;
+      position: relative; overflow: hidden;
+    }
+    .social-card:hover {
+      border-color: var(--border-hot);
+      background: var(--card-hover);
+      transform: translateY(-5px);
+      box-shadow: var(--glow);
+    }
+    .social-card .si {
+      font-size: 1.8rem;
+      transition: transform 0.3s;
+    }
+    .social-card:hover .si { transform: scale(1.2); }
+    .social-card .sn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem; letter-spacing: 1px;
+      color: var(--text-dim); text-transform: uppercase;
+    }
+    /* platform colors */
+    .sc-fb   .si { color: #1877f2; }
+    .sc-x    .si { color: #e7e9ea; }
+    .sc-ig   .si { color: #e1306c; }
+    .sc-li   .si { color: #0a66c2; }
+    .sc-yt   .si { color: #ff0000; }
+    .sc-gh   .si { color: #f0f6fc; }
+    .sc-pi   .si { color: #e60023; }
+    .sc-tm   .si { color: #35465c; }
+    .sc-tg   .si { color: #26a5e4; }
+
+    /* ── ABOUT ── */
+    #about {}
+    .about-grid {
+      display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; align-items: start;
+    }
+    .about-avatar-wrap {
+      position: relative; display: flex; flex-direction: column; align-items: center; gap: 1rem;
+    }
+    .avatar-frame {
+      width: 220px; height: 220px;
+      border: 2px solid var(--green);
+      position: relative;
+      box-shadow: var(--glow);
+    }
+    .avatar-frame::before, .avatar-frame::after {
+      content: ''; position: absolute;
+      width: 20px; height: 20px;
+    }
+    .avatar-frame::before {
+      top: -6px; left: -6px;
+      border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan);
+    }
+    .avatar-frame::after {
+      bottom: -6px; right: -6px;
+      border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan);
+    }
+    .avatar-placeholder {
+      width: 100%; height: 100%;
+      background: var(--bg3);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', monospace;
+      font-size: 4rem; color: var(--green);
+      text-shadow: var(--glow);
+    }
+    .avatar-id {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; color: var(--text-dim);
+      text-align: center; line-height: 1.6;
+    }
+    .about-info { display: flex; flex-direction: column; gap: 1.5rem; }
+    .info-row {
+      display: grid; grid-template-columns: 140px 1fr;
+      gap: 1rem; align-items: start;
+      padding: 0.8rem 0; border-bottom: 1px solid var(--border);
+    }
+    .info-key {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem; color: var(--green); letter-spacing: 1px;
+    }
+    .info-val {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem; color: var(--text);
+    }
+    .lang-badge {
+      display: inline-block;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; padding: 2px 8px;
+      border: 1px solid var(--border); color: var(--text-dim);
+      margin: 2px;
+    }
+    .hobby-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem; padding: 4px 12px;
+      border: 1px solid var(--border); color: var(--green-dim);
+      margin: 3px; transition: all 0.2s;
+    }
+    .hobby-badge:hover { border-color: var(--green); background: rgba(0,255,65,0.05); }
+
+    /* ── SCHEME / DIAGRAM ── */
+    #diagram { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .diagram-canvas-wrap {
+      border: 1px solid var(--border);
+      background: var(--bg);
+      padding: 2rem;
+    }
+    svg.arch-diagram { width: 100%; overflow: visible; }
+
+    /* ── CONTACT ── */
+    #contact {}
+    .contact-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;
+    }
+    .contact-info { display: flex; flex-direction: column; gap: 1.5rem; }
+    .c-item {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1rem 1.2rem;
+      background: var(--card); border: 1px solid var(--border);
+      transition: border-color 0.3s;
+    }
+    .c-item:hover { border-color: var(--border-hot); }
+    .c-icon { width: 40px; text-align: center; font-size: 1.2rem; color: var(--green); }
+    .c-detail { display: flex; flex-direction: column; gap: 2px; }
+    .c-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; color: var(--text-dim); letter-spacing: 1px;
+    }
+    .c-value {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem; color: var(--text);
+    }
+    /* Form */
+    .contact-form { display: flex; flex-direction: column; gap: 1rem; }
+    .form-field {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .form-field label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; color: var(--text-dim); letter-spacing: 1px;
+    }
+    .form-field input, .form-field textarea {
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--text); font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem; padding: 10px 14px;
+      outline: none; resize: vertical;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .form-field input:focus, .form-field textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 1px var(--green), var(--glow);
+    }
+    .form-field textarea { min-height: 120px; }
+    .form-submit {
+      align-self: flex-start;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; color: var(--text-dim);
+    }
+    footer span { color: var(--green); }
+
+    /* ── GLITCH ── */
+    @keyframes glitch {
+      0%   { clip-path: inset(40% 0 61% 0); transform: translate(-2px); }
+      20%  { clip-path: inset(92% 0 1% 0);  transform: translate(2px); }
+      40%  { clip-path: inset(43% 0 1% 0);  transform: translate(-1px); }
+      60%  { clip-path: inset(25% 0 58% 0); transform: translate(1px); }
+      80%  { clip-path: inset(54% 0 7% 0);  transform: translate(-2px); }
+      100% { clip-path: inset(58% 0 43% 0); transform: translate(2px); }
+    }
+    .glitch-wrap { position: relative; display: inline-block; }
+    .glitch-wrap::before, .glitch-wrap::after {
+      content: attr(data-text);
+      position: absolute; inset: 0;
+      font: inherit; color: inherit;
+    }
+    .glitch-wrap::before {
+      color: var(--cyan); text-shadow: -2px 0 var(--red);
+      animation: glitch 3s infinite linear alternate-reverse;
+      opacity: 0.6;
+    }
+    .glitch-wrap::after {
+      color: var(--red); text-shadow: 2px 0 var(--cyan);
+      animation: glitch 2.5s 0.5s infinite linear alternate-reverse;
+      opacity: 0.4;
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .hero-grid, .lang-radar-wrap, .about-grid, .contact-grid { grid-template-columns: 1fr; }
+      .stack-diagram { grid-template-columns: 1fr 1fr; }
+      #radar { max-width: 320px; }
+    }
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .stack-diagram { grid-template-columns: 1fr; }
+    }
+
+    /* hex decorations */
+    .hex-dec {
+      position: absolute; pointer-events: none; opacity: 0.04;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem; color: var(--green);
+      user-select: none; line-height: 1.4;
+    }
+    #hero .hex-dec { top: 10%; right: 2%; font-size: 0.5rem; }
+
+    /* corner brackets */
+    .corner-br {
+      position: absolute; width: 20px; height: 20px; pointer-events: none;
+    }
+    .corner-br.tl { top: 0; left: 0; border-top: 1px solid var(--green); border-left: 1px solid var(--green); }
+    .corner-br.tr { top: 0; right: 0; border-top: 1px solid var(--green); border-right: 1px solid var(--green); }
+    .corner-br.bl { bottom: 0; left: 0; border-bottom: 1px solid var(--green); border-left: 1px solid var(--green); }
+    .corner-br.br { bottom: 0; right: 0; border-bottom: 1px solid var(--green); border-right: 1px solid var(--green); }
+
+    /* ping animation for schema nodes */
+    @keyframes ping { 0%{transform:scale(1);opacity:1} 75%,100%{transform:scale(2);opacity:0} }
+    .node-ping {
+      position: absolute; border-radius: 50%;
+      border: 1px solid var(--green);
+      animation: ping 2s cubic-bezier(0,0,0.2,1) infinite;
+    }
+
+    /* typed cursor in hero */
+    .typed { border-right: 2px solid var(--green); animation: blink 0.7s infinite; }
+  </style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+<div class="custom-cursor" id="cursor"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">PB<span>_</span>DEV</div>
+  <ul class="nav-links">
+    <li><a href="#hero">~/home</a></li>
+    <li><a href="#about">~/profil</a></li>
+    <li><a href="#skills">~/abilități</a></li>
+    <li><a href="#languages">~/limbaje</a></li>
+    <li><a href="#stack">~/stack</a></li>
+    <li><a href="#social">~/social</a></li>
+    <li><a href="#contact">~/contact</a></li>
+  </ul>
+  <div class="nav-status">
+    <div class="status-dot"></div>
+    <span>ONLINE — CAHUL, MD</span>
+  </div>
+</nav>
+
+<div class="wrapper">
+
+  <!-- ── HERO ── -->
+  <section id="hero">
+    <!-- hex watermark -->
+    <div class="hex-dec">
+      0x50 0x61 0x73 0x63 0x61 0x6C<br>
+      0x42 0x65 0x6E 0x69 0x61 0x6D<br>
+      0x49 0x54 0x42 0x4C 0x4F 0x47<br>
+      0x57 0x65 0x62 0x44 0x65 0x76
+    </div>
+    <div class="hero-grid">
+      <div class="hero-left">
+        <div class="hero-tag">full-stack developer</div>
+        <h1 class="hero-name">
+          <div class="glitch-wrap" data-text="PASCAL">PASCAL</div><br>
+          <span class="accent">BENIAMIN</span>
+        </h1>
+        <div class="hero-role">~ Web App Admin / IT Engineer</div>
+        <p class="hero-bio">
+          Programator pasionat din Cahul, Moldova. Specializat în administrarea
+          aplicațiilor web, full-stack development și design grafic. 19 ani, elev
+          la Colegiul „Iulia Hașdeu".
+        </p>
+        <div class="hero-btns">
+          <a href="#skills" class="btn-primary">// Explorează Abilitățile</a>
+          <a href="#contact" class="btn-secondary">// Contact</a>
+        </div>
+      </div>
+
+      <!-- Terminal -->
+      <div class="hero-terminal">
+        <div class="terminal-bar">
+          <div class="t-dot red"></div>
+          <div class="t-dot yellow"></div>
+          <div class="t-dot green"></div>
+          <span style="margin-left:8px">root@kali:~</span>
+          <span style="margin-left:auto;color:var(--green)">bash</span>
+        </div>
+        <div class="terminal-body">
+          <div class="t-line"><span class="t-prompt">┌──(root㉿pascal)-[~]</span></div>
+          <div class="t-line"><span class="t-prompt">└─$&nbsp;</span><span class="t-cmd">cat profile.json</span></div>
+          <div class="t-line"><span class="t-out">{</span></div>
+          <div class="t-line"><span class="t-out">&nbsp;&nbsp;<span class="t-key">"name"</span>: <span class="t-val">"Pascal Beniamin"</span>,</span></div>
+          <div class="t-line"><span class="t-out">&nbsp;&nbsp;<span class="t-key">"age"</span>: <span class="t-val">19</span>,</span></div>
+          <div class="t-line"><span class="t-out">&nbsp;&nbsp;<span class="t-key">"location"</span>: <span class="t-val">"Cahul, Moldova 🇲🇩"</span>,</span></div>
+          <div class="t-line"><span class="t-out">&nbsp;&nbsp;<span class="t-key">"role"</span>: <span class="t-val">"Full-Stack Developer"</span>,</span></div>
+          <div class="t-line"><span class="t-out">&nbsp;&nbsp;<span class="t-key">"skills"</span>: [<span class="t-val">"Front-End"</span>, <span class="t-val">"Back-End"</span>,</span></div>
+          <div class="t-line"><span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-val">"Database"</span>, <span class="t-val">"Graphic Design"</span>],</span></div>
+          <div class="t-line"><span class="t-out">&nbsp;&nbsp;<span class="t-key">"status"</span>: <span class="t-val">"open_to_work"</span></span></div>
+          <div class="t-line"><span class="t-out">}</span></div>
+          <div class="t-line" style="margin-top:8px"><span class="t-prompt">└─$&nbsp;</span><span class="t-cmd">./run_career.sh <span class="t-cursor"></span></span></div>
+          <div class="t-line"><span class="t-comment"># Încărcare viitor IT... 100% ✓</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ABOUT ── -->
+  <section id="about">
+    <div class="section-header reveal">
+      <span class="section-num">01/</span>
+      <h2 class="section-title">DESPRE <span class="hl">MINE</span></h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="about-grid reveal">
+      <div class="about-avatar-wrap">
+        <div class="avatar-frame">
+          <div class="corner-br tl"></div>
+          <div class="corner-br tr"></div>
+          <div class="corner-br bl"></div>
+          <div class="corner-br br"></div>
+          <div class="avatar-placeholder">
+            <i class="fas fa-user-secret" style="font-size:5rem;color:var(--green);opacity:.7"></i>
+          </div>
+        </div>
+        <div class="avatar-id">
+          ID: 2004500545311<br>
+          DOB: 25.02.2006<br>
+          Nationality: MD 🇲🇩
+        </div>
+      </div>
+
+      <div class="about-info">
+        <div class="info-row">
+          <span class="info-key">// NUME</span>
+          <span class="info-val">Pascal Beniamin</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">// VÂRSTĂ</span>
+          <span class="info-val">19 ani (25.02.2006)</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">// LOCAȚIE</span>
+          <span class="info-val">Str. Decebal, Cahul 3933, Moldova</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">// STUDII</span>
+          <span class="info-val">Colegiul „Iulia Hașdeu" Cahul<br>
+          <span style="color:var(--text-dim);font-size:.85rem">Specializare: Administrarea Aplicațiilor Web (2022–2026)</span></span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">// LIMBAJE</span>
+          <span class="info-val">
+            <span class="lang-badge">🇷🇴 Română (nativă)</span>
+            <span class="lang-badge">🇬🇧 Engleză</span>
+            <span class="lang-badge">🇫🇷 Franceză</span>
+            <span class="lang-badge">🇷🇺 Rusă</span>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">// HOBBY</span>
+          <span class="info-val">
+            <span class="hobby-badge"><i class="fas fa-book"></i> Învățare</span>
+            <span class="hobby-badge"><i class="fas fa-music"></i> Muzică</span>
+            <span class="hobby-badge"><i class="fas fa-running"></i> Sport</span>
+            <span class="hobby-badge"><i class="fas fa-gamepad"></i> Gaming</span>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">// PERMIS</span>
+          <span class="info-val">AM · B1 · B (emis 02.04.2025)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SKILLS ── -->
+  <section id="skills" style="padding-top:60px">
+    <div class="section-header reveal">
+      <span class="section-num">02/</span>
+      <h2 class="section-title">ABILITĂȚI <span class="hl">TEHNICE</span></h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="skill-filters reveal">
+      <button class="filter-btn active" data-cat="all">ALL</button>
+      <button class="filter-btn" data-cat="frontend">Frontend</button>
+      <button class="filter-btn" data-cat="backend">Backend</button>
+      <button class="filter-btn" data-cat="design">Design</button>
+      <button class="filter-btn" data-cat="database">Database</button>
+      <button class="filter-btn" data-cat="other">Altele</button>
+    </div>
+    <div class="skills-grid reveal" id="skills-grid">
+      <!-- JS will fill -->
+    </div>
+  </section>
+
+  <!-- ── LANGUAGES ── -->
+  <section id="languages">
+    <div class="section-header reveal">
+      <span class="section-num">03/</span>
+      <h2 class="section-title">LIMBAJE DE <span class="hl">PROGRAMARE</span></h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="lang-radar-wrap">
+      <div class="lang-list reveal" id="lang-list"><!-- JS fills --></div>
+      <div class="reveal" style="display:flex;flex-direction:column;align-items:center;gap:1rem">
+        <svg id="radar" width="360" height="360" viewBox="0 0 360 360"></svg>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--text-dim)">— Diagramă Radar Competențe —</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STACK DIAGRAM ── -->
+  <section id="stack">
+    <div class="section-header reveal">
+      <span class="section-num">04/</span>
+      <h2 class="section-title">STACK <span class="hl">TEHNIC</span></h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="stack-diagram reveal">
+      <div class="stack-layer">
+        <div class="stack-layer-label"><i class="fas fa-desktop"></i> &nbsp;Front-End</div>
+        <div class="stack-tags">
+          <span class="stack-tag">HTML5</span>
+          <span class="stack-tag">CSS3</span>
+          <span class="stack-tag">Bootstrap</span>
+          <span class="stack-tag">JavaScript</span>
+          <span class="stack-tag">React</span>
+          <span class="stack-tag">Pug</span>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-layer-label"><i class="fas fa-server"></i> &nbsp;Back-End</div>
+        <div class="stack-tags">
+          <span class="stack-tag">Node.js</span>
+          <span class="stack-tag">Express</span>
+          <span class="stack-tag">REST API</span>
+          <span class="stack-tag">PHP</span>
+          <span class="stack-tag">ASP.NET</span>
+          <span class="stack-tag">C#</span>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-layer-label"><i class="fas fa-database"></i> &nbsp;Database</div>
+        <div class="stack-tags">
+          <span class="stack-tag">SQLite</span>
+          <span class="stack-tag">SQL</span>
+          <span class="stack-tag">ORM</span>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-layer-label"><i class="fas fa-paint-brush"></i> &nbsp;Design</div>
+        <div class="stack-tags">
+          <span class="stack-tag">Figma</span>
+          <span class="stack-tag">Photoshop</span>
+          <span class="stack-tag">Illustrator</span>
+          <span class="stack-tag">UI/UX</span>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-layer-label"><i class="fas fa-code"></i> &nbsp;Alte Limbaje</div>
+        <div class="stack-tags">
+          <span class="stack-tag">C++</span>
+          <span class="stack-tag">Windows Forms</span>
+          <span class="stack-tag">Python (basic)</span>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-layer-label"><i class="fas fa-network-wired"></i> &nbsp;Rețele / Testing</div>
+        <div class="stack-tags">
+          <span class="stack-tag">Computer Networking</span>
+          <span class="stack-tag">Software Testing</span>
+          <span class="stack-tag">Git</span>
+          <span class="stack-tag">Linux</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Architecture Diagram -->
+    <div class="diagram-canvas-wrap reveal" style="margin-top:3rem">
+      <svg class="arch-diagram" id="arch-svg" viewBox="0 0 900 260" height="260"></svg>
+    </div>
+  </section>
+
+  <!-- ── SOCIAL ── -->
+  <section id="social">
+    <div class="section-header reveal">
+      <span class="section-num">05/</span>
+      <h2 class="section-title">REȚELE <span class="hl">SOCIALE</span></h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="social-grid reveal">
+      <div class="social-card sc-fb">
+        <i class="fab fa-facebook si"></i>
+        <span class="sn">Facebook</span>
+      </div>
+      <div class="social-card sc-x">
+        <i class="fab fa-x-twitter si"></i>
+        <span class="sn">X / Twitter</span>
+      </div>
+      <div class="social-card sc-ig">
+        <i class="fab fa-instagram si"></i>
+        <span class="sn">Instagram</span>
+      </div>
+      <div class="social-card sc-li">
+        <i class="fab fa-linkedin si"></i>
+        <span class="sn">LinkedIn</span>
+      </div>
+      <div class="social-card sc-yt">
+        <i class="fab fa-youtube si"></i>
+        <span class="sn">YouTube</span>
+      </div>
+      <div class="social-card sc-pi">
+        <i class="fab fa-pinterest si"></i>
+        <span class="sn">Pinterest</span>
+      </div>
+      <div class="social-card sc-tm">
+        <i class="fab fa-tumblr si"></i>
+        <span class="sn">Tumblr</span>
+      </div>
+      <div class="social-card sc-gh">
+        <i class="fab fa-github si"></i>
+        <span class="sn">GitHub</span>
+      </div>
+      <div class="social-card sc-tg">
+        <i class="fab fa-telegram si"></i>
+        <span class="sn">Telegram</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CONTACT ── -->
+  <section id="contact">
+    <div class="section-header reveal">
+      <span class="section-num">06/</span>
+      <h2 class="section-title">CONTACT <span class="hl">& MESAJE</span></h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="contact-grid reveal">
+      <div class="contact-info">
+        <div class="c-item">
+          <div class="c-icon"><i class="fas fa-map-marker-alt"></i></div>
+          <div class="c-detail">
+            <span class="c-label">LOCAȚIE</span>
+            <span class="c-value">Str. Decebal, Cahul 3933, Moldova</span>
+          </div>
+        </div>
+        <div class="c-item">
+          <div class="c-icon"><i class="fas fa-envelope"></i></div>
+          <div class="c-detail">
+            <span class="c-label">EMAIL</span>
+            <span class="c-value">pascal.beniamin@elev.cihcahul.md</span>
+          </div>
+        </div>
+        <div class="c-item">
+          <div class="c-icon"><i class="fas fa-phone"></i></div>
+          <div class="c-detail">
+            <span class="c-label">TELEFON</span>
+            <span class="c-value">(+373) 67 113 766</span>
+          </div>
+        </div>
+        <div class="c-item">
+          <div class="c-icon"><i class="fas fa-graduation-cap"></i></div>
+          <div class="c-detail">
+            <span class="c-label">INSTITUȚIE</span>
+            <span class="c-value">Colegiul „Iulia Hașdeu" Cahul</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-form">
+        <div class="form-field">
+          <label>// NUMELE TĂU</label>
+          <input type="text" placeholder="ex: Ion Popescu" />
+        </div>
+        <div class="form-field">
+          <label>// EMAIL</label>
+          <input type="email" placeholder="ex: email@domain.com" />
+        </div>
+        <div class="form-field">
+          <label>// MESAJ</label>
+          <textarea placeholder="Scrie mesajul tău aici..."></textarea>
+        </div>
+        <div class="form-submit">
+          <button class="btn-primary" type="button" onclick="this.textContent='// TRIMIS ✓'; this.style.color='var(--green)'">// TRIMITE MESAJ</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div style="margin-bottom:8px">
+      © 2026 — <span>Pascal Beniamin</span> — IT Blog — Cahul, Moldova
+    </div>
+    <div style="font-size:.6rem;opacity:.5">
+      Built with HTML · CSS · JavaScript &nbsp;|&nbsp; Inspired by Kali Linux UI
+    </div>
+  </footer>
+
+</div><!-- /wrapper -->
+
+<script>
+// ── CURSOR ──
+const cursor = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top  = e.clientY + 'px';
+});
+
+// ── MATRIX RAIN ──
+(function(){
+  const canvas = document.getElementById('matrix-canvas');
+  const ctx = canvas.getContext('2d');
+  const chars = 'ハミチツサラアイウエオカキクケコサシスセソタテトナニヌネノ0123456789ABCDEF<>/\\{}[]=+-'.split('');
+  let cols, drops;
+  function resize(){
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    cols  = Math.floor(canvas.width / 18);
+    drops = Array(cols).fill(1);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  setInterval(()=>{
+    ctx.fillStyle = 'rgba(5,10,5,0.05)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#00ff41';
+    ctx.font = '14px Share Tech Mono';
+    drops.forEach((y,i)=>{
+      const c = chars[Math.floor(Math.random()*chars.length)];
+      ctx.fillText(c, i*18, y*18);
+      if(y*18 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    });
+  }, 50);
+})();
+
+// ── SKILLS DATA ──
+const skillsData = [
+  { name:'HTML5',        cat:'frontend', pct:92, icon:'fab fa-html5',      color:'#e34c26' },
+  { name:'CSS3',         cat:'frontend', pct:88, icon:'fab fa-css3-alt',    color:'#264de4' },
+  { name:'Bootstrap',    cat:'frontend', pct:85, icon:'fab fa-bootstrap',   color:'#7952b3' },
+  { name:'JavaScript',   cat:'frontend', pct:82, icon:'fab fa-js',          color:'#f7df1e' },
+  { name:'React',        cat:'frontend', pct:75, icon:'fab fa-react',       color:'#61dafb' },
+  { name:'Node.js',      cat:'backend',  pct:78, icon:'fab fa-node-js',     color:'#68a063' },
+  { name:'Express',      cat:'backend',  pct:74, icon:'fas fa-server',      color:'#00ff41' },
+  { name:'PHP',          cat:'backend',  pct:70, icon:'fab fa-php',         color:'#8892bf' },
+  { name:'ASP.NET',      cat:'backend',  pct:65, icon:'fas fa-code',        color:'#512bd4' },
+  { name:'C#',           cat:'backend',  pct:68, icon:'fas fa-hashtag',     color:'#239120' },
+  { name:'C++',          cat:'backend',  pct:60, icon:'fas fa-terminal',    color:'#00549d' },
+  { name:'Figma',        cat:'design',   pct:85, icon:'fab fa-figma',       color:'#f24e1e' },
+  { name:'Photoshop',    cat:'design',   pct:78, icon:'fas fa-image',       color:'#31a8ff' },
+  { name:'Illustrator',  cat:'design',   pct:72, icon:'fas fa-pen-nib',     color:'#ff9a00' },
+  { name:'SQLite',       cat:'database', pct:75, icon:'fas fa-database',    color:'#003b57' },
+  { name:'SQL',          cat:'database', pct:78, icon:'fas fa-table',       color:'#00e5ff' },
+  { name:'Linux',        cat:'other',    pct:70, icon:'fab fa-linux',       color:'#fcc624' },
+  { name:'Git',          cat:'other',    pct:72, icon:'fab fa-git-alt',     color:'#f05032' },
+  { name:'Networking',   cat:'other',    pct:65, icon:'fas fa-network-wired',color:'#00ff41'},
+  { name:'Testing',      cat:'other',    pct:60, icon:'fas fa-vial',        color:'#ff003c' },
+  { name:'REST API',     cat:'backend',  pct:80, icon:'fas fa-plug',        color:'#00e5ff' },
+  { name:'Pug',          cat:'frontend', pct:70, icon:'fas fa-leaf',        color:'#a86454' },
+];
+
+function renderSkills(filter='all'){
+  const grid = document.getElementById('skills-grid');
+  grid.innerHTML = '';
+  skillsData.filter(s => filter === 'all' || s.cat === filter).forEach((s,i) => {
+    const card = document.createElement('div');
+    card.className = 'skill-card';
+    card.innerHTML = `
+      <div class="skill-icon"><i class="${s.icon}" style="color:${s.color}"></i></div>
+      <div class="skill-name">${s.name}</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" data-pct="${s.pct}"></div></div>
+      <div class="skill-percent">${s.pct}%</div>
+    `;
+    card.style.animationDelay = (i * 0.05) + 's';
+    grid.appendChild(card);
+  });
+  // animate bars
+  setTimeout(()=>{
+    document.querySelectorAll('.skill-bar').forEach(b => {
+      b.style.width = b.dataset.pct + '%';
+    });
+  }, 200);
+}
+renderSkills();
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', ()=> {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderSkills(btn.dataset.cat);
+  });
+});
+
+// ── LANGUAGES ──
+const langData = [
+  { name:'JavaScript', icon:'fab fa-js',       color:'#f7df1e', pct:82, lvl:'Avansat' },
+  { name:'HTML/CSS',   icon:'fab fa-html5',    color:'#e34c26', pct:90, lvl:'Expert'  },
+  { name:'PHP',        icon:'fab fa-php',      color:'#8892bf', pct:70, lvl:'Mediu'   },
+  { name:'C#',         icon:'fas fa-hashtag',  color:'#239120', pct:68, lvl:'Mediu'   },
+  { name:'C++',        icon:'fas fa-terminal', color:'#00549d', pct:60, lvl:'Mediu'   },
+  { name:'SQL',        icon:'fas fa-database', color:'#00e5ff', pct:75, lvl:'Avansat' },
+  { name:'Node.js',    icon:'fab fa-node-js',  color:'#68a063', pct:78, lvl:'Avansat' },
+];
+const ll = document.getElementById('lang-list');
+langData.forEach(l => {
+  ll.innerHTML += `
+    <div class="lang-item">
+      <div class="lang-header">
+        <span class="lang-name"><i class="${l.icon}" style="color:${l.color}"></i>${l.name}</span>
+        <span class="lang-lvl">${l.lvl} — ${l.pct}%</span>
+      </div>
+      <div class="lang-track">
+        <div class="lang-fill" data-pct="${l.pct}"
+          style="background:linear-gradient(90deg,${l.color},var(--cyan))"></div>
+      </div>
+    </div>`;
+});
+
+// ── RADAR CHART ──
+(function(){
+  const svg = document.getElementById('radar');
+  const cx = 180, cy = 180, r = 150;
+  const labels = ['HTML/CSS','JavaScript','Node.js','PHP','C#','C++','SQL'];
+  const vals   = [90, 82, 78, 70, 68, 60, 75];
+  const n = labels.length;
+  const ns = svg.namespaceURI || 'http://www.w3.org/2000/svg';
+
+  function pt(i, frac){
+    const a = (i/n)*2*Math.PI - Math.PI/2;
+    return { x: cx + r*frac*Math.cos(a), y: cy + r*frac*Math.sin(a) };
+  }
+  // grid rings
+  [0.25,0.5,0.75,1].forEach(f=>{
+    const pts = Array.from({length:n},(_,i)=>pt(i,f));
+    const poly = document.createElementNS(ns,'polygon');
+    poly.setAttribute('points', pts.map(p=>p.x+','+p.y).join(' '));
+    poly.setAttribute('fill','none');
+    poly.setAttribute('stroke','rgba(0,255,65,0.12)');
+    poly.setAttribute('stroke-width','1');
+    svg.appendChild(poly);
+  });
+  // axes
+  for(let i=0;i<n;i++){
+    const p = pt(i,1);
+    const line = document.createElementNS(ns,'line');
+    line.setAttribute('x1',cx); line.setAttribute('y1',cy);
+    line.setAttribute('x2',p.x); line.setAttribute('y2',p.y);
+    line.setAttribute('stroke','rgba(0,255,65,0.15)');
+    line.setAttribute('stroke-width','1');
+    svg.appendChild(line);
+    // label
+    const lp = pt(i, 1.18);
+    const text = document.createElementNS(ns,'text');
+    text.setAttribute('x',lp.x); text.setAttribute('y',lp.y);
+    text.setAttribute('fill','#4a7a4a');
+    text.setAttribute('font-size','10');
+    text.setAttribute('font-family','Share Tech Mono,monospace');
+    text.setAttribute('text-anchor','middle');
+    text.setAttribute('dominant-baseline','middle');
+    text.textContent = labels[i];
+    svg.appendChild(text);
+  }
+  // data polygon
+  const dataPts = vals.map((v,i)=>pt(i,v/100));
+  const dataPoly = document.createElementNS(ns,'polygon');
+  dataPoly.setAttribute('points', dataPts.map(p=>p.x+','+p.y).join(' '));
+  dataPoly.setAttribute('fill','rgba(0,255,65,0.12)');
+  dataPoly.setAttribute('stroke','#00ff41');
+  dataPoly.setAttribute('stroke-width','2');
+  svg.appendChild(dataPoly);
+  // dots
+  dataPts.forEach(p=>{
+    const circle = document.createElementNS(ns,'circle');
+    circle.setAttribute('cx',p.x); circle.setAttribute('cy',p.y);
+    circle.setAttribute('r','4');
+    circle.setAttribute('fill','#00ff41');
+    circle.setAttribute('filter','url(#glow)');
+    svg.appendChild(circle);
+  });
+  // glow filter
+  const defs = document.createElementNS(ns,'defs');
+  defs.innerHTML = `<filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  svg.insertBefore(defs, svg.firstChild);
+})();
+
+// ── ARCHITECTURE DIAGRAM ──
+(function(){
+  const svg = document.getElementById('arch-svg');
+  const ns  = 'http://www.w3.org/2000/svg';
+  const nodes = [
+    { id:'browser', label:'Browser\n/ Client', x:60,  y:100, w:110, h:60, color:'#00e5ff' },
+    { id:'react',   label:'React\nFront-End',  x:230, y:100, w:110, h:60, color:'#61dafb' },
+    { id:'node',    label:'Node / Express\nBack-End',  x:420, y:100, w:130, h:60, color:'#68a063' },
+    { id:'db',      label:'SQLite\nDatabase',  x:620, y:100, w:110, h:60, color:'#00e5ff' },
+    { id:'api',     label:'REST API',          x:420, y:10,  w:130, h:40, color:'#ffe600' },
+    { id:'php',     label:'PHP / ASP.NET',     x:620, y:10,  w:130, h:40, color:'#8892bf' },
+  ];
+  const edges = [
+    {from:'browser', to:'react', label:'UI events'},
+    {from:'react',   to:'node',  label:'HTTP/REST'},
+    {from:'node',    to:'db',    label:'Queries'},
+    {from:'node',    to:'api',   label:'API calls'},
+    {from:'api',     to:'php',   label:'srv-to-srv'},
+  ];
+
+  // draw edges
+  function center(n){ return {x:n.x+n.w/2, y:n.y+n.h/2}; }
+  const nodeMap = {};
+  nodes.forEach(n=>nodeMap[n.id]=n);
+
+  edges.forEach(e=>{
+    const a = center(nodeMap[e.from]);
+    const b = center(nodeMap[e.to]);
+    const line = document.createElementNS(ns,'line');
+    line.setAttribute('x1',a.x); line.setAttribute('y1',a.y);
+    line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
+    line.setAttribute('stroke','rgba(0,255,65,0.3)');
+    line.setAttribute('stroke-width','1.5');
+    line.setAttribute('stroke-dasharray','5,3');
+    svg.appendChild(line);
+    // label
+    const tx = document.createElementNS(ns,'text');
+    tx.setAttribute('x',(a.x+b.x)/2); tx.setAttribute('y',(a.y+b.y)/2 - 6);
+    tx.setAttribute('fill','rgba(0,255,65,0.5)');
+    tx.setAttribute('font-size','9'); tx.setAttribute('font-family','Share Tech Mono,monospace');
+    tx.setAttribute('text-anchor','middle');
+    tx.textContent = e.label;
+    svg.appendChild(tx);
+  });
+
+  // draw nodes
+  nodes.forEach(n=>{
+    const rect = document.createElementNS(ns,'rect');
+    rect.setAttribute('x',n.x); rect.setAttribute('y',n.y);
+    rect.setAttribute('width',n.w); rect.setAttribute('height',n.h);
+    rect.setAttribute('fill','rgba(0,0,0,0.5)');
+    rect.setAttribute('stroke',n.color);
+    rect.setAttribute('stroke-width','1.5');
+    svg.appendChild(rect);
+    // label (multiline simulation)
+    const lines = n.label.split('\n');
+    lines.forEach((l,i)=>{
+      const t = document.createElementNS(ns,'text');
+      t.setAttribute('x',n.x+n.w/2);
+      t.setAttribute('y',n.y + n.h/2 + (i - (lines.length-1)/2)*14);
+      t.setAttribute('fill',n.color);
+      t.setAttribute('font-size','10');
+      t.setAttribute('font-family','Share Tech Mono,monospace');
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('dominant-baseline','middle');
+      t.textContent = l;
+      svg.appendChild(t);
+    });
+  });
+})();
+
+// ── SCROLL REVEAL ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      // animate lang bars when visible
+      e.target.querySelectorAll('.lang-fill').forEach(b=>{
+        b.style.width = b.dataset.pct + '%';
+      });
+      // animate skill bars
+      e.target.querySelectorAll('.skill-bar').forEach(b=>{
+        b.style.width = b.dataset.pct + '%';
+      });
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// init skill bars on load
+setTimeout(()=>{
+  document.querySelectorAll('.skill-bar').forEach(b => {
+    b.style.width = b.dataset.pct + '%';
+  });
+},600);
+</script>
+</body>
+</html>
